@@ -37,8 +37,8 @@ export default function HomeScreen() {
         <button className="btn btn-primary" onClick={() => dispatch({ type: 'GO_SETUP', mode: 'party' })}>
           {t.partyMode}
         </button>
-        <button className="btn btn-ghost" onClick={() => dispatch({ type: 'GO_SETUP', mode: 'solo' })}>
-          {t.soloMode}
+        <button className="btn btn-ghost" onClick={() => dispatch({ type: 'START_TEST_MODE' })}>
+          {state.alcoholMode ? t.testButtonAlcohol : t.testButtonClean}
         </button>
         <p style={{ color: 'var(--ink-faint)', fontSize: 11, textAlign: 'center', marginTop: 6, lineHeight: 1.5 }}>
           {t.subtitle}

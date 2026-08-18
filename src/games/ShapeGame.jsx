@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import CountdownBar from '../components/CountdownBar'
 
 // Génère des points de référence pour chaque forme (dans un repère 200x200 centré)
@@ -48,8 +48,8 @@ function pointsToPath(points, closed = true) {
 }
 
 // Score de similarité: distance moyenne du tracé utilisateur aux points de référence.
-// Seuil assoupli par rapport à la V1 : un tracé au doigt sur petit écran est naturellement
-// moins précis qu'à la souris, donc on tolère une marge d'erreur plus large.
+// Tolérance encore élargie par rapport à la version précédente (85 -> 110) : un tracé
+// au doigt reste naturellement imprécis, mieux vaut valider trop large que trop strict.
 function scoreDrawing(userPoints, refPoints) {
   if (userPoints.length < 5) return 0
   let totalDist = 0
@@ -66,8 +66,7 @@ function scoreDrawing(userPoints, refPoints) {
     count++
   }
   const avgDist = totalDist / count
-  // avgDist 0 -> 100%, avgDist >= 85 -> 0% (tolérance élargie vs 55 précédemment)
-  const score = Math.max(0, Math.min(100, Math.round(100 - (avgDist / 85) * 100)))
+  const score = Math.max(0, Math.min(100, Math.round(100 - (avgDist / 110) * 100)))
   return score
 }
 
@@ -78,45 +77,19 @@ export default function ShapeGame({ config, effects, onComplete }) {
   const [userTrail, setUserTrail] = useState([])
   const [drawing, setDrawing] = useState(false)
   const [status, setStatus] = useState('playing')
-  const [rotation, setRotation] = useState(0)
-  const [shapeOpacity, setShapeOpacity] = useState(1)
-  const [shake, setShake] = useState(false)
   const finishedRef = useRef(false)
 
-  // Rotation continue + disparition progressive en mode drunk
-  useEffect(() => {
-    if (effects.intensity < 0.3) return
-    let raf
-    const startTime = Date.now()
-    function tick() {
-      const elapsed = (Date.now() - startTime) / 1000
-      setRotation(elapsed * 14 * effects.intensity)
-      const fadeSpeed = effects.intensity * 0.3
-      setShapeOpacity(Math.max(0.25, 1 - elapsed * fadeSpeed * 0.15))
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [effects.intensity])
-
-  // Tremblement aléatoire du téléphone
-  useEffect(() => {
-    if (effects.screenShake) {
-      const interval = setInterval(() => {
-        setShake(true)
-        setTimeout(() => setShake(false), 400)
-      }, 1800 + Math.random() * 1200)
-      return () => clearInterval(interval)
-    }
-  }, [effects.screenShake])
-
+  // Calcule le point SVG à partir des coordonnées écran, en tenant compte du VRAI ratio
+  // largeur/hauteur affiché (le SVG est carré à l'écran via aspectRatio CSS, donc rect.width
+  // et rect.height sont égaux — plus de désalignement possible entre les deux axes).
   function getSvgPoint(clientX, clientY) {
     const svg = svgRef.current
     const rect = svg.getBoundingClientRect()
-    // Compense le fait que le doigt cache le tracé : on décale virtuellement vers le haut
-    const fingerOffsetY = -14
-    const x = ((clientX - rect.left) / rect.width) * 200
-    const y = ((clientY - rect.top) / rect.height) * 200 + fingerOffsetY
+    // Compense le fait que le doigt cache le tracé : décalage vertical vers le haut
+    const fingerOffsetY = -12
+    const scale = 200 / rect.width // rect.width === rect.height car le conteneur est forcé carré
+    const x = (clientX - rect.left) * scale
+    const y = (clientY - rect.top) * scale + fingerOffsetY
     return { x, y }
   }
 
@@ -130,7 +103,7 @@ export default function ShapeGame({ config, effects, onComplete }) {
   function handleMove(e) {
     if (!drawing || status !== 'playing') return
     const touch = e.touches ? e.touches[0] : e
-    let p = getSvgPoint(touch.clientX, touch.clientY)
+    const p = getSvgPoint(touch.clientX, touch.clientY)
     setUserTrail(prev => [...prev, p])
   }
 
@@ -142,7 +115,7 @@ export default function ShapeGame({ config, effects, onComplete }) {
     if (finishedRef.current) return
     finishedRef.current = true
     const score = scoreDrawing(userTrail, refPoints)
-    const success = score >= 35
+    const success = score >= 30
     setStatus(success ? 'success' : 'fail')
     setTimeout(() => {
       onComplete({
@@ -161,6 +134,10 @@ export default function ShapeGame({ config, effects, onComplete }) {
   const effectiveTimeMs = (timeLimit + 2) * 1000
   const cappedSpeedMultiplier = Math.min(effects.timerSpeedMultiplier, 1.25)
 
+  // Ce mini-jeu n'utilise QUE le flou en mode chaos — pas de rotation, pas de tremblement,
+  // pas de disparition progressive. Le tracé précis nécessite un rendu stable.
+  const blurAmount = effects.blurPx > 0.1 ? `blur(${effects.blurPx}px)` : 'none'
+
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
@@ -174,14 +151,17 @@ export default function ShapeGame({ config, effects, onComplete }) {
         ✍️ Reproduis la forme {SHAPE_EMOJI[shape]}
       </p>
 
-      <div
-        className={`grow center ${shake ? 'shake' : ''}`}
-        style={{ position: 'relative' }}
-      >
+      <div className="grow center" style={{ position: 'relative' }}>
         <svg
           ref={svgRef}
           viewBox="0 0 200 200"
-          style={{ width: '90%', maxWidth: 320, touchAction: 'none', filter: effects.blurPx > 0.1 ? `blur(${effects.blurPx}px)` : 'none' }}
+          style={{
+            width: '90%',
+            maxWidth: 320,
+            aspectRatio: '1 / 1',
+            touchAction: 'none',
+            filter: blurAmount,
+          }}
           onMouseDown={handleStart}
           onMouseMove={handleMove}
           onMouseUp={handleEnd}
@@ -190,17 +170,14 @@ export default function ShapeGame({ config, effects, onComplete }) {
           onTouchMove={handleMove}
           onTouchEnd={handleEnd}
         >
-          <g style={{ transformOrigin: '100px 100px', transform: `rotate(${rotation}deg)` }}>
-            <path
-              d={pointsToPath(refPoints, shape !== 'zigzag')}
-              stroke="var(--surface-hi)"
-              strokeWidth={6}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={shapeOpacity}
-            />
-          </g>
+          <path
+            d={pointsToPath(refPoints, shape !== 'zigzag')}
+            stroke="var(--surface-hi)"
+            strokeWidth={6}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           {userTrail.length > 1 && (
             <path
               d={pointsToPath(userTrail, false)}

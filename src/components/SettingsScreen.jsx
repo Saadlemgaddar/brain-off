@@ -4,6 +4,7 @@ import { LANGUAGES, UI_TEXT } from '../utils/i18n'
 export default function SettingsScreen() {
   const { state, dispatch } = useGame()
   const t = UI_TEXT[state.language || 'fr']
+  const isMinor = state.isAdult === false
 
   return (
     <div className="screen screen-pad fade-in" style={{ overflowY: 'auto' }}>
@@ -40,21 +41,25 @@ export default function SettingsScreen() {
         <p style={{ fontSize: 12, color: 'var(--ink-dim)', fontWeight: 600, letterSpacing: '0.04em' }}>
           {t.gameMode}
         </p>
-        <button
-          onClick={() => dispatch({ type: 'SET_ALCOHOL_MODE', value: true })}
-          className="btn"
-          style={{
-            textAlign: 'left',
-            background: 'var(--surface)',
-            border: `2px solid ${state.alcoholMode === true ? 'var(--drunk)' : 'transparent'}`,
-            padding: 18,
-          }}
-        >
-          <div style={{ fontSize: 16, marginBottom: 3 }}>{t.withAlcohol}</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-dim)', fontFamily: 'var(--font-body)', fontWeight: 400 }}>
-            {t.withAlcoholDesc}
-          </div>
-        </button>
+
+        {!isMinor && (
+          <button
+            onClick={() => dispatch({ type: 'SET_ALCOHOL_MODE', value: true })}
+            className="btn"
+            style={{
+              textAlign: 'left',
+              background: 'var(--surface)',
+              border: `2px solid ${state.alcoholMode === true ? 'var(--drunk)' : 'transparent'}`,
+              padding: 18,
+            }}
+          >
+            <div style={{ fontSize: 16, marginBottom: 3 }}>{t.withAlcohol}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', fontFamily: 'var(--font-body)', fontWeight: 400 }}>
+              {t.withAlcoholDesc}
+            </div>
+          </button>
+        )}
+
         <button
           onClick={() => dispatch({ type: 'SET_ALCOHOL_MODE', value: false })}
           className="btn"
@@ -70,6 +75,12 @@ export default function SettingsScreen() {
             {t.noAlcoholDesc}
           </div>
         </button>
+
+        {isMinor && (
+          <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 4, lineHeight: 1.5 }}>
+            {t.ageCheckMinorNotice}
+          </p>
+        )}
       </div>
 
       <div className="grow" />

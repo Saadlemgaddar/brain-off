@@ -25,9 +25,9 @@ export const LEVELS = [
   { id: 'aim-3', type: 'aim', title: 'Vise le point', difficulty: 3, config: { targets: 3, size: 46, timeLimit: 8, moving: true } },
 
   // === 🔢 CALCUL COMPLÈTEMENT DÉBILE ===
-  { id: 'math-1', type: 'math', title: 'Calcul débile', difficulty: 1, config: { ops: 2, maxNum: 10, timeLimit: 7 } },
-  { id: 'math-2', type: 'math', title: 'Calcul débile', difficulty: 2, config: { ops: 3, maxNum: 12, timeLimit: 6 } },
-  { id: 'math-3', type: 'math', title: 'Calcul débile', difficulty: 3, config: { ops: 3, maxNum: 15, timeLimit: 5, emojiNumbers: true } },
+  { id: 'math-1', type: 'math', title: 'Calcul débile', difficulty: 1, config: { ops: 1, maxNum: 8, timeLimit: 8 } },
+  { id: 'math-2', type: 'math', title: 'Calcul débile', difficulty: 2, config: { ops: 2, maxNum: 8, timeLimit: 7 } },
+  { id: 'math-3', type: 'math', title: 'Calcul débile', difficulty: 3, config: { ops: 2, maxNum: 10, timeLimit: 6, emojiNumbers: true } },
 
   // === 👀 TROUVE L'INTRUS ===
   { id: 'odd-1', type: 'oddOneOut', title: "Trouve l'intrus", difficulty: 1, config: { gridSize: 16, contrast: 'high', timeLimit: 7 } },

@@ -20,25 +20,27 @@ export default function MemoryGame({ config, effects, onComplete }) {
     const isPositionQ = question === 'position'
     let targetIndex = null
     let missingEmoji = null
-    let displayItems = chosen
 
     if (isPositionQ) {
       targetIndex = Math.floor(Math.random() * count)
     } else {
-      // "missing" -> on montre count items, puis on demande lequel d'une liste de count+1 n'était pas présent
       missingEmoji = shuffle(EMOJI_POOL.filter(e => !chosen.includes(e)))[0]
     }
     return { chosen, targetIndex, missingEmoji, isPositionQ }
   }, [count, question])
 
   const [phase, setPhase] = useState('flash') // flash | question | done
-  const [positions, setPositions] = useState([])
+  // `positions[slot] = origIdx` : quel item (par son index d'origine dans setup.chosen)
+  // est affiché à cet emplacement visuel. C'est LA SEULE source de vérité pour "où est quoi",
+  // utilisée à la fois pendant le flash ET pendant la question, pour rester cohérente.
+  const [positions, setPositions] = useState(() => setup.chosen.map((_, i) => i))
   const [status, setStatus] = useState(null)
   const finishedRef = useRef(false)
 
-  // Positions dans une grille, potentiellement ré-agencées rapidement en mode Drunk
+  // Re-mélange rapide des positions en mode chaos intense — mais on fige le mélange final
+  // AVANT de passer à la phase question, pour que la grille de réponse corresponde exactement
+  // à ce que le joueur vient de voir à l'écran (plus de désynchronisation flash vs question).
   useEffect(() => {
-    const cols = count <= 4 ? 2 : 3
     const base = setup.chosen.map((_, i) => i)
     setPositions(base)
 
@@ -46,8 +48,7 @@ export default function MemoryGame({ config, effects, onComplete }) {
       const interval = setInterval(() => {
         setPositions(shuffle(base))
       }, 500)
-      const t = setTimeout(() => clearInterval(interval), flashMs)
-      return () => { clearInterval(interval); clearTimeout(t) }
+      return () => clearInterval(interval)
     }
   }, [])
 
@@ -108,7 +109,10 @@ export default function MemoryGame({ config, effects, onComplete }) {
 
   if (setup.isPositionQ) {
     const targetEmoji = setup.chosen[setup.targetIndex]
-    const options = setup.chosen.map((_, i) => i)
+    // La grille de réponse réutilise EXACTEMENT les mêmes positions figées que la dernière
+    // frame du flash : `positions[slot]` donne l'origIdx affiché à ce slot. Le joueur clique
+    // sur le slot visuel dont il se souvient, on compare avec le bon slot (pas le bon origIdx).
+    const targetSlot = positions.indexOf(setup.targetIndex)
 
     return (
       <div className="col" style={{ height: '100%', padding: 16 }}>
@@ -128,11 +132,11 @@ export default function MemoryGame({ config, effects, onComplete }) {
             margin: '0 auto',
           }}
         >
-          {options.map(i => (
+          {positions.map((origIdx, slot) => (
             <button
-              key={i}
+              key={slot}
               disabled={status !== null}
-              onClick={() => finish(i === setup.targetIndex)}
+              onClick={() => finish(slot === targetSlot)}
               className="center"
               style={{
                 aspectRatio: '1',
@@ -140,7 +144,7 @@ export default function MemoryGame({ config, effects, onComplete }) {
                 background: 'var(--surface)',
                 borderRadius: 18,
                 color: 'var(--ink-faint)',
-                border: status !== null && i === setup.targetIndex ? '3px solid var(--success)' : '3px solid transparent',
+                border: status !== null && slot === targetSlot ? '3px solid var(--success)' : '3px solid transparent',
               }}
             >
               ?

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useGame } from '../context/GameContext'
 import { UI_TEXT } from '../utils/i18n'
 import { speak } from '../utils/voice'
+import { GIFS } from '../utils/media'
 
 const MEDALS_ALCOHOL = ['🥇', '🥈', '🥉', '🍺', '🍺', '🍺', '🍺', '🍺']
 const MEDALS_CLEAN = ['🥇', '🥈', '🥉', '🎯', '🎯', '🎯', '🎯', '🎯']
@@ -43,8 +44,18 @@ export default function LeaderboardScreen() {
             animation: 'popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, shake 0.5s ease 0.4s',
           }}
         >
-          <span style={{ fontSize: 36 }}>🥴</span>
-          <p style={{ fontSize: 11, color: 'var(--wasted)', fontWeight: 700, letterSpacing: '0.05em', textAlign: 'center' }}>
+          <img
+            src={GIFS.mostDrunk}
+            alt=""
+            style={{
+              width: 120,
+              height: 120,
+              objectFit: 'cover',
+              borderRadius: 16,
+              border: '2px solid var(--wasted)',
+            }}
+          />
+          <p style={{ fontSize: 11, color: 'var(--wasted)', fontWeight: 700, letterSpacing: '0.05em', textAlign: 'center', marginTop: 4 }}>
             {lastPlaceTitle}
           </p>
           <p style={{ fontSize: 20, fontFamily: 'var(--font-display)', textAlign: 'center' }}>

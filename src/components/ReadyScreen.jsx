@@ -17,9 +17,9 @@ export default function ReadyScreen() {
     if (spokenRef.current || !state.voiceEnabled || !currentPlayer || !currentLevel) return
     spokenRef.current = true
     const introLine = VOICE_INTROS[lang]?.[currentLevel.type]
-    if (introLine) {
-      speak(`${t.yourTurn} ${currentPlayer.name}. ${introLine}`, lang)
-    }
+    if (!introLine) return
+    const prefix = state.isTestMode ? '' : `${t.yourTurn} ${currentPlayer.name}. `
+    speak(`${prefix}${introLine}`, lang)
   }, [state.currentLevelIndex, currentPlayer, currentLevel])
 
   if (!currentPlayer || !currentLevel) return null
@@ -36,12 +36,20 @@ export default function ReadyScreen() {
       onClick={handleReady}
     >
       <div className="col center" style={{ gap: 18, padding: '0 32px' }}>
-        <p style={{ color: 'var(--ink-dim)', fontSize: 14, letterSpacing: '0.05em' }}>
-          {t.yourTurn}
-        </p>
-        <h1 className="pop-in" style={{ fontSize: 36, color: 'var(--acid)', textAlign: 'center' }}>
-          {currentPlayer.name}
-        </h1>
+        {state.isTestMode ? (
+          <p style={{ color: 'var(--ink-dim)', fontSize: 15, textAlign: 'center' }}>
+            {t.testIntro}
+          </p>
+        ) : (
+          <>
+            <p style={{ color: 'var(--ink-dim)', fontSize: 14, letterSpacing: '0.05em' }}>
+              {t.yourTurn}
+            </p>
+            <h1 className="pop-in" style={{ fontSize: 36, color: 'var(--acid)', textAlign: 'center' }}>
+              {currentPlayer.name}
+            </h1>
+          </>
+        )}
         <p style={{ color: 'var(--ink-faint)', fontSize: 14, marginTop: 4, textAlign: 'center' }}>
           {currentLevel.title}
         </p>

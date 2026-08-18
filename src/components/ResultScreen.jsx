@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { UI_TEXT, getResultVoiceLines, getRandomLine, getDrinkAssignLine } from '../utils/i18n'
 import { speak } from '../utils/voice'
+import { getResultGif, SOUNDS } from '../utils/media'
+import { playSound } from '../utils/sound'
 
 export default function ResultScreen() {
   const { state, currentPlayer, dispatch } = useGame()
   const { lastResult } = state
   const spokenRef = useRef(false)
+  const soundPlayedRef = useRef(false)
   const lang = state.language || 'fr'
   const t = UI_TEXT[lang]
   const [canContinue, setCanContinue] = useState(!state.voiceEnabled) // si la voix est coupée, on peut continuer tout de suite
@@ -19,9 +22,19 @@ export default function ResultScreen() {
     lineRef.current = getRandomLine(pool)
   }
 
-  const drinkLine = lastResult && state.alcoholMode && lastResult.drinkTargetName
+  const drinkLine = lastResult && state.alcoholMode && lastResult.drinkTargetName && !state.isTestMode
     ? getDrinkAssignLine(lang, lastResult.success, lastResult.drinkTargetName)
     : null
+
+  const gifSrc = lastResult ? getResultGif(!!state.alcoholMode, lastResult.success) : null
+
+  // Bruitage joué une seule fois dès l'affichage du résultat (indépendant de la voix,
+  // les deux peuvent se superposer légèrement — c'est voulu, comme un vrai jeu de soirée).
+  useEffect(() => {
+    if (!lastResult || soundPlayedRef.current) return
+    soundPlayedRef.current = true
+    playSound(lastResult.success ? SOUNDS.applause : SOUNDS.buzzer, { volume: 0.5 })
+  }, [])
 
   useEffect(() => {
     if (!lastResult || spokenRef.current) return
@@ -34,7 +47,7 @@ export default function ResultScreen() {
 
     // On attend la fin RÉELLE de la voix avant d'autoriser à continuer — pas de délai fixe arbitraire.
     async function speakSequence() {
-      const namePrefix = currentPlayer?.name ? `${currentPlayer.name}. ` : ''
+      const namePrefix = currentPlayer?.name && !state.isTestMode ? `${currentPlayer.name}. ` : ''
       await speak(namePrefix + lineRef.current, lang)
       if (drinkLine) {
         await speak(drinkLine, lang)
@@ -62,14 +75,24 @@ export default function ResultScreen() {
       onClick={canContinue ? handleContinue : undefined}
     >
       <div className="col center pop-in" style={{ gap: 14, padding: '0 32px', textAlign: 'center' }}>
-        <div style={{ fontSize: 56 }}>
-          {lastResult.success ? '✅' : '❌'}
-        </div>
+        {gifSrc && (
+          <img
+            src={gifSrc}
+            alt=""
+            style={{
+              width: 160,
+              height: 160,
+              objectFit: 'cover',
+              borderRadius: 20,
+              border: `2px solid ${lastResult.success ? 'var(--success)' : 'var(--danger)'}`,
+            }}
+          />
+        )}
         {lastResult.message && (
           <p style={{ fontSize: 14, color: 'var(--ink-faint)' }}>{lastResult.message}</p>
         )}
         <h2 style={{ fontSize: 21, color: lastResult.success ? 'var(--success)' : 'var(--danger)', lineHeight: 1.35 }}>
-          {currentPlayer?.name && <span style={{ color: 'var(--ink)' }}>{currentPlayer.name.toUpperCase()}. </span>}
+          {currentPlayer?.name && !state.isTestMode && <span style={{ color: 'var(--ink)' }}>{currentPlayer.name.toUpperCase()}. </span>}
           {lineRef.current}
         </h2>
         <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 4 }}>
