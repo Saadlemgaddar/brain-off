@@ -1,5 +1,5 @@
 // Lecteur de sons courts (applaudissements/buzzer) via l'élément Audio natif du navigateur.
-// Les fichiers sont embarqués localement dans public/media/sounds/, donc ça fonctionne
+// Les fichiers sont embarqués localement dans public/sounds/, donc ça fonctionne
 // hors-ligne dans l'APK — pas de dépendance réseau.
 
 export function playSound(src, { volume = 0.7 } = {}) {

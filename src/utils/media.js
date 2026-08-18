@@ -1,22 +1,22 @@
-// Chemins vers les GIFs et sons embarqués dans public/media/.
+// Chemins vers les GIFs et sons embarqués directement dans public/gifs/ et public/sounds/.
 // Utilise import.meta.env.BASE_URL pour que ça marche aussi bien en dev qu'une fois
 // packagé dans l'APK (chemins relatifs cohérents avec vite.config.js base: './').
 
 const BASE = import.meta.env.BASE_URL || './'
 
 export const GIFS = {
-  victoryAlcohol: `${BASE}media/gifs/victory-alcohol.gif`,
-  victoryClean: `${BASE}media/gifs/victory-clean.gif`,
-  failAlcohol: `${BASE}media/gifs/fail-alcohol.gif`,
-  failClean: `${BASE}media/gifs/fail-clean.gif`,
-  mostDrunk: `${BASE}media/gifs/most-drunk.gif`,
-  testSuccess: `${BASE}media/gifs/test-success.gif`,
-  testFail: `${BASE}media/gifs/test-fail.gif`,
+  victoryAlcohol: `${BASE}gifs/victory-alcohol.gif`,
+  victoryClean: `${BASE}gifs/victory-clean.gif`,
+  failAlcohol: `${BASE}gifs/fail-alcohol.gif`,
+  failClean: `${BASE}gifs/fail-clean.gif`,
+  mostDrunk: `${BASE}gifs/most-drunk.gif`,
+  testSuccess: `${BASE}gifs/test-success.gif`,
+  testFail: `${BASE}gifs/test-fail.gif`,
 }
 
 export const SOUNDS = {
-  applause: `${BASE}media/sounds/applause.mp3`,
-  buzzer: `${BASE}media/sounds/buzzer.mp3`,
+  applause: `${BASE}sounds/applause.mp3`,
+  buzzer: `${BASE}sounds/buzzer.mp3`,
 }
 
 // Sélectionne le bon GIF de résultat selon le mode et le succès/échec.
