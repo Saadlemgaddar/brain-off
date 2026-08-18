@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useRef, useState, useMemo } from 'react'
 import CountdownBar from '../components/CountdownBar'
 import { getStageClassName, getStageStyle } from '../utils/drunkEffects'
 
@@ -38,6 +38,15 @@ function minDistToPath(p, points) {
   return min
 }
 
+// Décalage vertical appliqué à la position du doigt : sur mobile, le doigt cache le point
+// qu'on essaie de toucher, donc les gens visent naturellement un peu plus bas. On compense
+// en "remontant" virtuellement le point de contact de quelques pixels.
+const FINGER_OFFSET_Y = -18
+
+// Marge de tolérance ajoutée à la largeur du chemin pour absorber l'imprécision tactile
+// normale d'un doigt (par opposition à un curseur de souris précis au pixel).
+const TOUCH_TOLERANCE_PX = 22
+
 export default function PathGame({ config, effects, onComplete }) {
   const { segments, width, timeLimit } = config
   const points = useMemo(() => generatePath(segments), [])
@@ -45,7 +54,6 @@ export default function PathGame({ config, effects, onComplete }) {
   const [dragging, setDragging] = useState(false)
   const [trail, setTrail] = useState([])
   const [status, setStatus] = useState('playing') // playing | success | fail
-  const [progress, setProgress] = useState(0)
   const finishedRef = useRef(false)
   const wobbleSeed = useRef(Math.random() * 100)
 
@@ -55,8 +63,10 @@ export default function PathGame({ config, effects, onComplete }) {
   function getSvgPoint(clientX, clientY) {
     const svg = svgRef.current
     const rect = svg.getBoundingClientRect()
-    const x = ((clientX - rect.left) / rect.width) * 300
-    const y = ((clientY - rect.top) / rect.height) * 480
+    const scaleX = 300 / rect.width
+    const scaleY = 480 / rect.height
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY + FINGER_OFFSET_Y * scaleY
     return { x, y }
   }
 
@@ -64,9 +74,10 @@ export default function PathGame({ config, effects, onComplete }) {
     if (status !== 'playing') return
     const touch = e.touches ? e.touches[0] : e
     const p = getSvgPoint(touch.clientX, touch.clientY)
-    if (Math.hypot(p.x - start.x, p.y - start.y) < 40) {
+    // Zone de départ généreuse : le joueur doit juste être "dans le coin" du point A
+    if (Math.hypot(p.x - start.x, p.y - start.y) < 55) {
       setDragging(true)
-      setTrail([p])
+      setTrail([start]) // on démarre proprement depuis le centre du point A
     }
   }
 
@@ -75,7 +86,7 @@ export default function PathGame({ config, effects, onComplete }) {
     const touch = e.touches ? e.touches[0] : e
     let p = getSvgPoint(touch.clientX, touch.clientY)
 
-    // Décalage drunk appliqué à l'input
+    // Décalage drunk appliqué à l'input (uniquement si le mode chaos est actif)
     if (effects.inputOffset > 0) {
       const t = Date.now() / 220
       p = {
@@ -85,7 +96,9 @@ export default function PathGame({ config, effects, onComplete }) {
     }
 
     const dist = minDistToPath(p, points)
-    if (dist > width / 2 + 6) {
+    const tolerance = width / 2 + TOUCH_TOLERANCE_PX
+
+    if (dist > tolerance) {
       finish(false)
       return
     }
@@ -93,18 +106,12 @@ export default function PathGame({ config, effects, onComplete }) {
     setTrail(prev => [...prev, p])
 
     const distToEnd = Math.hypot(p.x - end.x, p.y - end.y)
-    const totalLen = points.reduce((acc, pt, i) => i === 0 ? 0 : acc + Math.hypot(pt.x - points[i-1].x, pt.y - points[i-1].y), 0)
-    setProgress(Math.max(0, Math.min(1, 1 - distToEnd / totalLen)))
-
-    if (distToEnd < 30) {
+    if (distToEnd < 38) {
       finish(true)
     }
   }
 
   function handleEnd() {
-    if (status === 'playing' && dragging && progress < 0.9) {
-      // Lâché avant la fin = échec seulement si peu de progression et temps pas écoulé
-    }
     setDragging(false)
   }
 
@@ -129,12 +136,16 @@ export default function PathGame({ config, effects, onComplete }) {
     ? 0.35 + Math.sin(Date.now() / 300) * 0.15
     : 1
 
+  // Timer plus généreux + accélération drunk plafonnée pour rester jouable même en chaos
+  const effectiveTimeMs = (timeLimit + 2) * 1000
+  const cappedSpeedMultiplier = Math.min(effects.timerSpeedMultiplier, 1.25)
+
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
         <CountdownBar
-          durationMs={timeLimit * 1000}
-          speedMultiplier={effects.timerSpeedMultiplier}
+          durationMs={effectiveTimeMs}
+          speedMultiplier={cappedSpeedMultiplier}
           onExpire={handleTimeout}
         />
       </div>

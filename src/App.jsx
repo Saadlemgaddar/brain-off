@@ -1,4 +1,5 @@
 import { GameProvider, useGame } from './context/GameContext'
+import IntroScreen from './components/IntroScreen'
 import HomeScreen from './components/HomeScreen'
 import SetupScreen from './components/SetupScreen'
 import PlayingScreen from './components/PlayingScreen'
@@ -9,6 +10,8 @@ function Router() {
   const { state } = useGame()
 
   switch (state.screen) {
+    case 'intro':
+      return <IntroScreen />
     case 'home':
       return <HomeScreen />
     case 'setup':
@@ -20,7 +23,7 @@ function Router() {
     case 'leaderboard':
       return <LeaderboardScreen />
     default:
-      return <HomeScreen />
+      return <IntroScreen />
   }
 }
 

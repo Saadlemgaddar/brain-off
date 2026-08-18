@@ -25,8 +25,8 @@ export function getDrunkEffects(intensity) {
     invertControls: i > 0.9,
     // Faux boutons qui apparaissent (final boss)
     fakeButtons: i > 0.85,
-    // Vitesse du compte à rebours qui accélère
-    timerSpeedMultiplier: 1 + i * 0.5,
+    // Vitesse du compte à rebours qui accélère (plafonné à +25% pour rester jouable)
+    timerSpeedMultiplier: 1 + i * 0.25,
     // Teinte qui change en continu
     hueShift: i > 0.7,
     // Vignette violette

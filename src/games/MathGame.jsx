@@ -1,6 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import CountdownBar from '../components/CountdownBar'
 
+const NEUTRAL_EMOJI = '🎲'
+const ALCOHOL_EMOJI = '🍺'
+
 function generateProblem(ops, maxNum) {
   const numbers = []
   const operators = []
@@ -28,10 +31,10 @@ function generateProblem(ops, maxNum) {
   return { numbers, operators, result }
 }
 
-function buildExpressionString(numbers, operators, emojiNumbers) {
-  let str = emojiNumbers ? '🍺' : String(numbers[0])
+function buildExpressionString(numbers, operators, emojiNumbers, emoji) {
+  let str = emojiNumbers ? emoji : String(numbers[0])
   for (let i = 0; i < operators.length; i++) {
-    str += ` ${operators[i]} ${emojiNumbers ? '🍺' : numbers[i + 1]}`
+    str += ` ${operators[i]} ${emojiNumbers ? emoji : numbers[i + 1]}`
   }
   return str
 }
@@ -46,13 +49,14 @@ function generateChoices(correct) {
   return [...choices].sort(() => Math.random() - 0.5)
 }
 
-export default function MathGame({ config, effects, onComplete }) {
+export default function MathGame({ config, effects, onComplete, alcoholMode }) {
   const { ops, maxNum, timeLimit, emojiNumbers } = config
   const problem = useMemo(() => generateProblem(ops, maxNum), [])
   const choices = useMemo(() => generateChoices(problem.result), [problem])
   const [status, setStatus] = useState(null)
   const finishedRef = useRef(false)
   const [wiggle, setWiggle] = useState(false)
+  const emoji = alcoholMode ? ALCOHOL_EMOJI : NEUTRAL_EMOJI
 
   useEffect(() => {
     if (effects.intensity > 0.5) {
@@ -74,12 +78,15 @@ export default function MathGame({ config, effects, onComplete }) {
     }, 700)
   }
 
-  const exprText = buildExpressionString(problem.numbers, problem.operators, emojiNumbers)
+  const exprText = buildExpressionString(problem.numbers, problem.operators, emojiNumbers, emoji)
+  // Timer plus généreux : on plafonne l'accélération drunk pour éviter un temps ridicule sur les niveaux courts
+  const cappedSpeedMultiplier = Math.min(effects.timerSpeedMultiplier, 1.2)
+  const effectiveTimeMs = Math.max(timeLimit, 4) * 1000 // plancher à 4s même si la config dit moins
 
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
-        <CountdownBar durationMs={timeLimit * 1000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
+        <CountdownBar durationMs={effectiveTimeMs} speedMultiplier={cappedSpeedMultiplier} onExpire={() => finish(false)} />
       </div>
       <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-dim)', marginBottom: 20 }}>
         🔢 Résous vite !
@@ -99,7 +106,7 @@ export default function MathGame({ config, effects, onComplete }) {
         </h2>
         {emojiNumbers && (
           <p style={{ fontSize: 11, color: 'var(--ink-faint)' }}>
-            (🍺 = {problem.numbers.join(', ')})
+            ({emoji} = {problem.numbers.join(', ')})
           </p>
         )}
 

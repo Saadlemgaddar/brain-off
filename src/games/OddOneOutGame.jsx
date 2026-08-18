@@ -1,29 +1,32 @@
 import { useState, useMemo, useRef } from 'react'
 import CountdownBar from '../components/CountdownBar'
 
-// Paires "normal / intrus" avec différents niveaux de subtilité
-const PAIR_SETS = {
+// Paires "normal / intrus" avec différents niveaux de subtilité — deux jeux : alcool / neutre
+const PAIR_SETS_ALCOHOL = {
   high: [
     { base: '🍺', odd: '🍻' },
     { base: '⭐', odd: '🌟' },
     { base: '🔵', odd: '🟢' },
     { base: '❤️', odd: '🧡' },
   ],
-  medium: [
-    { base: '🍺', odd: '🍺' }, // rotation gérée via CSS pour subtilité
-    { base: '⚪', odd: '⚪' },
-    { base: '🟡', odd: '🟠' },
-  ],
-  low: [
-    { base: '⚪', odd: '⚪' },
-    { base: '🔴', odd: '🔴' },
-  ],
+  mediumBase: '🍺',
 }
 
-export default function OddOneOutGame({ config, effects, onComplete }) {
+const PAIR_SETS_CLEAN = {
+  high: [
+    { base: '🎯', odd: '🎪' },
+    { base: '⭐', odd: '🌟' },
+    { base: '🔵', odd: '🟢' },
+    { base: '❤️', odd: '🧡' },
+  ],
+  mediumBase: '🟡',
+}
+
+export default function OddOneOutGame({ config, effects, onComplete, alcoholMode }) {
   const { gridSize, contrast, timeLimit } = config
   const [status, setStatus] = useState(null)
   const finishedRef = useRef(false)
+  const pairSets = alcoholMode ? PAIR_SETS_ALCOHOL : PAIR_SETS_CLEAN
 
   const setup = useMemo(() => {
     const cols = 5
@@ -33,12 +36,12 @@ export default function OddOneOutGame({ config, effects, onComplete }) {
 
     let baseEmoji, oddEmoji, oddStyle = {}
     if (contrast === 'high') {
-      const pair = PAIR_SETS.high[Math.floor(Math.random() * PAIR_SETS.high.length)]
+      const pair = pairSets.high[Math.floor(Math.random() * pairSets.high.length)]
       baseEmoji = pair.base
       oddEmoji = pair.odd
     } else if (contrast === 'medium') {
-      baseEmoji = '🍺'
-      oddEmoji = '🍺'
+      baseEmoji = pairSets.mediumBase
+      oddEmoji = pairSets.mediumBase
       oddStyle = { transform: 'scaleX(-1)', filter: 'brightness(0.85)' }
     } else {
       baseEmoji = '⚪'
@@ -47,7 +50,7 @@ export default function OddOneOutGame({ config, effects, onComplete }) {
     }
 
     return { cols, rows, total, oddIndex, baseEmoji, oddEmoji, oddStyle }
-  }, [gridSize, contrast])
+  }, [gridSize, contrast, alcoholMode])
 
   function finish(success) {
     if (finishedRef.current) return
@@ -63,11 +66,14 @@ export default function OddOneOutGame({ config, effects, onComplete }) {
   }
 
   const cells = Array.from({ length: setup.total }, (_, i) => i)
+  // Timer légèrement rallongé + accélération drunk plafonnée pour rester jouable
+  const effectiveTimeMs = (timeLimit + 1) * 1000
+  const cappedSpeedMultiplier = Math.min(effects.timerSpeedMultiplier, 1.25)
 
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
-        <CountdownBar durationMs={timeLimit * 1000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
+        <CountdownBar durationMs={effectiveTimeMs} speedMultiplier={cappedSpeedMultiplier} onExpire={() => finish(false)} />
       </div>
       <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-dim)', marginBottom: 12 }}>
         👀 Trouve l'intrus dans la grille

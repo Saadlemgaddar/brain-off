@@ -2,40 +2,41 @@
 
 > Your brain. Your phone. Good luck.
 
-Jeu de soirée multijoueur (2 à 8 joueurs) sur un seul téléphone. 7 mini-jeux, 23 niveaux, et un **mode Drunk** qui simule progressivement la perte de coordination (flou, tremblement, décalage tactile, cible qui bouge, chemin flou, contrôles inversés en fin de soirée...).
+Jeu de soirée multijoueur (2 à 8 joueurs) sur un seul téléphone. 7 mini-jeux, 23 niveaux, et un **mode chaos** qui simule progressivement la perte de coordination (flou, tremblement, décalage tactile, cible qui bouge, chemin flou, contrôles inversés en fin de soirée...).
 
 Construit en **React + Vite**, packagé en APK Android via **Capacitor**.
 
 ---
 
-## 🚀 Étape 1 — Installer les dépendances (sur TON ordinateur)
+## 🆕 Nouveautés de cette version
 
-Ce projet n'a pas encore de `node_modules` (pas d'accès réseau possible depuis l'environnement où il a été écrit). Il te faut juste :
+- **Écran d'intro** : choix de la langue (Français / English / الدارجة) puis choix "Avec alcool" ou "Sans alcool" avant de jouer
+- **Mode sans alcool** : aucune mention, texte, emoji ou message vocal lié à l'alcool nulle part dans l'app — tous les textes basculent vers des versions neutres et 100% fun
+- **Commentateur vocal** : à chaque défi et à chaque résultat, une voix annonce ce qu'il faut faire et commente le résultat ("T'as perdu, bois un coup" en mode alcool / une punchline neutre en mode sans alcool), avec plusieurs variantes aléatoires pour ne jamais se répéter
+- **Voix native, pas d'API externe** : le système utilise le moteur Text-to-Speech déjà installé sur le téléphone (Web Speech API / `speechSynthesis`). Aucune connexion internet requise, aucune clé API, aucun fichier audio à télécharger — tout tourne en local dans l'APK. Un bouton permet de couper la voix depuis l'écran d'accueil
+- **Bugs corrigés** : les faux "raté" sur "Le chemin" et "Dessine la forme" (tolérance tactile trop stricte, ne compensait pas le fait que le doigt cache le point visé) ; les timers étaient trop agressifs en mode chaos (accélération plafonnée, temps de base augmentés partout)
 
-1. Installer [Node.js](https://nodejs.org/) (version 18 ou plus récente) si ce n'est pas déjà fait.
-2. Décompresser le dossier `brain-off`.
-3. Ouvrir un terminal dans ce dossier et lancer :
+### À savoir sur la voix
+- Le Darija n'a pas de voix dédiée sur la quasi-totalité des téléphones Android : le système retombe automatiquement sur une voix arabe générique, puis sur le français si aucune voix arabe n'est installée. Le texte à l'écran reste toujours affiché quoi qu'il arrive — la voix n'est qu'un bonus, jamais bloquant.
+- Si tu veux remplacer ce système par de vrais fichiers audio enregistrés plus tard (une vraie voix humaine plutôt que le TTS système), la structure est prête à recevoir ça dans `src/utils/voice.js` — dis-le-moi et je peux préparer l'architecture pour charger des fichiers `.mp3`/`.ogg` à la place.
+
+---
+
+## 🚀 Étape 1 — Installer les dépendances (sur TON ordinateur ou StackBlitz)
 
 ```bash
 npm install
 ```
 
-Ça télécharge React, Vite et Capacitor (~1-2 minutes).
-
-## 🧪 Étape 2 — Tester dans le navigateur (optionnel mais conseillé)
+## 🧪 Étape 2 — Tester dans le navigateur
 
 ```bash
 npm run dev
 ```
 
-Ouvre le lien affiché (genre `http://localhost:5173`) dans Chrome sur ton téléphone (même wifi) ou dans le navigateur de ton PC en mode "responsive/mobile" (F12 → icône téléphone) pour tester rapidement avant de faire l'APK.
-
 ## 📱 Étape 3 — Générer l'APK Android
 
-### Option A — Capacitor + Android Studio (recommandé, gratuit, fiable)
-
-1. Installe [Android Studio](https://developer.android.com/studio) (gratuit).
-2. Dans le dossier du projet :
+### Option A — Capacitor + Android Studio (recommandé)
 
 ```bash
 npm run build
@@ -44,23 +45,21 @@ npx cap sync android
 npx cap open android
 ```
 
-3. Android Studio s'ouvre automatiquement avec le projet. Une fois le sync Gradle terminé (barre de progression en bas), va dans le menu :
-   **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+Puis dans Android Studio : **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+L'APK sera dans `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-4. L'APK sera généré dans :
-   `android/app/build/outputs/apk/debug/app-debug.apk`
+### Option B — PWABuilder (sans Android Studio)
 
-5. Transfère ce fichier sur ton téléphone (câble USB, Drive, WhatsApp...) et installe-le (il faut autoriser "Sources inconnues" dans les paramètres Android la première fois).
+1. `npm run build`, héberge `dist/` (Vercel, Netlify, StackBlitz preview...)
+2. Va sur [pwabuilder.com](https://www.pwabuilder.com/), colle l'URL
+3. "Package for Android" → télécharge l'APK
 
-> 💡 Si tu modifies le code plus tard : refais juste `npm run build` puis `npx cap sync android` avant de rebuilder dans Android Studio.
+### Option C — Depuis StackBlitz (tablette, sans PC)
 
-### Option B — PWABuilder (sans installer Android Studio)
-
-1. Fais d'abord `npm run build`, puis héberge le contenu du dossier `dist/` quelque part (Vercel, Netlify, GitHub Pages — gratuit et en 2 minutes).
-2. Va sur [pwabuilder.com](https://www.pwabuilder.com/), colle l'URL de ton site.
-3. Clique sur "Package for Android" → télécharge l'APK généré.
-
-C'est plus rapide à mettre en place mais un peu moins direct que Capacitor (nécessite d'héberger le site quelque part au préalable).
+1. Importe le repo GitHub dans StackBlitz : `https://stackblitz.com/github/TON-PSEUDO/TON-REPO`
+2. `npm run dev` dans le terminal intégré
+3. Copie l'URL de preview publique
+4. Colle-la dans PWABuilder comme ci-dessus
 
 ---
 
@@ -71,7 +70,7 @@ C'est plus rapide à mettre en place mais un peu moins direct que Capacitor (né
 - ✍️ **Dessine la forme** — reproduire ⭐ ❤️ ⭕ ⚡ au doigt
 - 🧠 **Mémoire express** — retenir des objets, retrouver leur position ou l'intrus manquant
 - 🎯 **Vise le point** — toucher une séquence de cibles colorées
-- 🔢 **Calcul débile** — résoudre un calcul en 3-5 secondes (chiffres remplacés par 🍺 en mode Drunk)
+- 🔢 **Calcul débile** — résoudre un calcul en quelques secondes
 - 👀 **Trouve l'intrus** — repérer l'élément différent dans une grille
 - 🖐️ **Réflexe** — TAP / DON'T TAP, tester le contrôle des impulsions
 
@@ -79,16 +78,11 @@ C'est plus rapide à mettre en place mais un peu moins direct que Capacitor (né
 - **Touche le bouton vert** — même en tapant le bon bouton, le jeu dira souvent "trop lent !"
 - **Ne touche pas l'écran** — résister à la tentation d'un gros bouton rouge qui apparaît
 
-### Le mode Drunk 🥴
-La progression est automatique au fil de la soirée (SOBER → TIPSY → DRUNK → WASTED → FINAL BOSS), ou réglable manuellement dans les options avant de lancer une partie. Plus le niveau monte :
-- l'écran tremble et s'incline légèrement
-- le tracé/la forme devient flou et pivote
-- le point de contact tactile est décalé (mauvaise coordination simulée)
-- le compte à rebours accélère
-- à 100% (Final Boss) : teintes qui changent, vignette violette, contrôles quasi ingérables
+### Le mode chaos 🥴
+Progression automatique au fil de la soirée, ou réglable manuellement. Plus le niveau monte : écran qui tremble et s'incline, tracé flou, décalage du point de contact tactile, compte à rebours qui accélère (plafonné pour rester jouable), teintes qui changent, vignette en Final Boss.
 
 ### Mode soirée
-2 à 8 joueurs, à tour de rôle. Classement final avec médailles 🥇🥈🥉💀 à la fin.
+2 à 8 joueurs, à tour de rôle. Classement final avec médailles à la fin.
 
 ---
 
@@ -97,17 +91,24 @@ La progression est automatique au fil de la soirée (SOBER → TIPSY → DRUNK �
 ```
 src/
 ├── App.jsx                  # Routeur d'écrans
-├── context/GameContext.jsx  # État global (joueurs, scores, niveau d'ivresse)
+├── context/GameContext.jsx  # État global (joueurs, scores, langue, mode alcool, niveau de chaos)
 ├── utils/levels.js          # Les 23 niveaux
 ├── utils/drunkEffects.js    # Calcul des effets visuels/tactiles selon l'intensité
-├── components/              # Écrans (Home, Setup, Playing, Result, Leaderboard)
+├── utils/i18n.js            # Traductions FR/EN/Darija + banque de messages commentateur
+├── utils/voice.js           # Système Text-to-Speech natif (Web Speech API)
+├── components/              # Écrans (Intro, Home, Setup, Playing, Result, Leaderboard)
 └── games/                   # Les 9 mini-jeux (7 + 2 pièges)
 ```
 
+## ✏️ Pour ajouter une phrase du commentateur
+
+Toutes les lignes vocales sont dans `src/utils/i18n.js`, dans `VOICE_SUCCESS_CLEAN`, `VOICE_FAIL_CLEAN`, `VOICE_SUCCESS_ALCOHOL`, `VOICE_FAIL_ALCOHOL` — une liste par langue. Ajoute une ligne dans le tableau de la langue voulue, elle sera piochée aléatoirement avec les autres.
+
 ## ✏️ Pour ajouter un niveau
 
-Ajoute une entrée dans `src/utils/levels.js` avec un `type` existant (path, shape, memory, aim, math, oddOneOut, reflex, trapButton, trapNoTouch) et une config adaptée — pas besoin de toucher au reste du code.
+Ajoute une entrée dans `src/utils/levels.js` avec un `type` existant — pas besoin de toucher au reste du code.
 
 ## 🎨 Pour changer l'identité visuelle
 
 Toutes les couleurs sont dans `src/index.css` (`:root`), variables `--acid`, `--tipsy`, `--drunk`, `--wasted`, `--final`.
+

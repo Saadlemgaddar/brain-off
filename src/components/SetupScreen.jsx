@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useGame } from '../context/GameContext'
+import { UI_TEXT } from '../utils/i18n'
 
 export default function SetupScreen() {
   const { state, dispatch } = useGame()
+  const t = UI_TEXT[state.language || 'fr']
   const isParty = state.mode === 'party'
   const [players, setPlayers] = useState(isParty ? ['', ''] : ['Toi'])
   const [rounds, setRounds] = useState(5)
@@ -47,21 +49,21 @@ export default function SetupScreen() {
           ←
         </button>
         <h2 style={{ fontSize: 20, marginLeft: 8 }}>
-          {isParty ? '🎉 Mode soirée' : '🧍 Jouer seul'}
+          {isParty ? t.partyMode : t.soloMode}
         </h2>
       </div>
 
       {isParty && (
         <div className="col" style={{ gap: 10, marginBottom: 24 }}>
           <p style={{ fontSize: 12, color: 'var(--ink-dim)', fontWeight: 600, letterSpacing: '0.04em' }}>
-            JOUEURS ({players.length}/8)
+            {t.players} ({players.length}/8)
           </p>
           {players.map((p, i) => (
             <div key={i} className="row" style={{ gap: 8 }}>
               <input
                 value={p}
                 onChange={e => updatePlayer(i, e.target.value)}
-                placeholder={`Joueur ${i + 1}`}
+                placeholder={`${t.players.slice(0, -1)} ${i + 1}`}
                 maxLength={14}
                 style={{
                   flex: 1,
@@ -86,7 +88,7 @@ export default function SetupScreen() {
           ))}
           {players.length < 8 && (
             <button className="btn btn-ghost" style={{ padding: 12, fontSize: 13 }} onClick={addPlayer}>
-              + Ajouter un joueur
+              {t.addPlayer}
             </button>
           )}
         </div>
@@ -94,7 +96,7 @@ export default function SetupScreen() {
 
       <div className="col" style={{ gap: 10, marginBottom: 24 }}>
         <p style={{ fontSize: 12, color: 'var(--ink-dim)', fontWeight: 600, letterSpacing: '0.04em' }}>
-          DÉFIS PAR JOUEUR
+          {t.challengesPerPlayer}
         </p>
         <div className="row" style={{ gap: 8 }}>
           {[3, 5, 8].map(r => (
@@ -118,7 +120,7 @@ export default function SetupScreen() {
 
       <div className="col" style={{ gap: 12, marginBottom: 16 }}>
         <p style={{ fontSize: 12, color: 'var(--ink-dim)', fontWeight: 600, letterSpacing: '0.04em' }}>
-          MODE DRUNK
+          {t.chaosMode}
         </p>
         <button
           onClick={() => setDrunkOn(!drunkOn)}
@@ -131,9 +133,9 @@ export default function SetupScreen() {
           }}
         >
           <div className="col" style={{ alignItems: 'flex-start', gap: 2 }}>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>🥴 Chaos progressif</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>🌀 {t.chaosMode}</span>
             <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>
-              L'écran devient de plus en plus ingérable
+              {t.chaosDesc}
             </span>
           </div>
           <div
@@ -170,7 +172,7 @@ export default function SetupScreen() {
               style={{ padding: '10px 4px' }}
             >
               <span style={{ fontSize: 12, color: 'var(--ink-dim)' }}>
-                Choisir manuellement le niveau plutôt qu'automatique
+                {t.manualLevel}
               </span>
               <span style={{ fontSize: 12, color: manualMode ? 'var(--acid)' : 'var(--ink-faint)' }}>
                 {manualMode ? 'ON' : 'OFF'}
@@ -198,7 +200,7 @@ export default function SetupScreen() {
         onClick={handleStart}
         style={{ opacity: canStart() ? 1 : 0.4, marginTop: 12 }}
       >
-        C'EST PARTI 🚀
+        {t.startGame}
       </button>
     </div>
   )

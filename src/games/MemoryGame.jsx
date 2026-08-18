@@ -113,7 +113,7 @@ export default function MemoryGame({ config, effects, onComplete }) {
     return (
       <div className="col" style={{ height: '100%', padding: 16 }}>
         <div style={{ marginBottom: 10 }}>
-          <CountdownBar durationMs={5000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
+          <CountdownBar durationMs={7000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
         </div>
         <p style={{ textAlign: 'center', fontSize: 15, marginBottom: 20 }}>
           Où était {targetEmoji} ?
@@ -161,7 +161,7 @@ export default function MemoryGame({ config, effects, onComplete }) {
   return (
     <div className="col" style={{ height: '100%', padding: 16 }}>
       <div style={{ marginBottom: 10 }}>
-        <CountdownBar durationMs={5000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
+        <CountdownBar durationMs={7000} speedMultiplier={effects.timerSpeedMultiplier} onExpire={() => finish(false)} />
       </div>
       <p style={{ textAlign: 'center', fontSize: 15, marginBottom: 20 }}>
         Quel objet n'était PAS présent ?

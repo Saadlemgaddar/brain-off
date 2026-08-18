@@ -47,7 +47,9 @@ function pointsToPath(points, closed = true) {
   return closed ? d + ' Z' : d
 }
 
-// Score de similarité: distance moyenne du tracé utilisateur aux points de référence
+// Score de similarité: distance moyenne du tracé utilisateur aux points de référence.
+// Seuil assoupli par rapport à la V1 : un tracé au doigt sur petit écran est naturellement
+// moins précis qu'à la souris, donc on tolère une marge d'erreur plus large.
 function scoreDrawing(userPoints, refPoints) {
   if (userPoints.length < 5) return 0
   let totalDist = 0
@@ -64,8 +66,8 @@ function scoreDrawing(userPoints, refPoints) {
     count++
   }
   const avgDist = totalDist / count
-  // avgDist 0 -> 100%, avgDist >= 60 -> 0%
-  const score = Math.max(0, Math.min(100, Math.round(100 - (avgDist / 55) * 100)))
+  // avgDist 0 -> 100%, avgDist >= 85 -> 0% (tolérance élargie vs 55 précédemment)
+  const score = Math.max(0, Math.min(100, Math.round(100 - (avgDist / 85) * 100)))
   return score
 }
 
@@ -112,8 +114,10 @@ export default function ShapeGame({ config, effects, onComplete }) {
   function getSvgPoint(clientX, clientY) {
     const svg = svgRef.current
     const rect = svg.getBoundingClientRect()
+    // Compense le fait que le doigt cache le tracé : on décale virtuellement vers le haut
+    const fingerOffsetY = -14
     const x = ((clientX - rect.left) / rect.width) * 200
-    const y = ((clientY - rect.top) / rect.height) * 200
+    const y = ((clientY - rect.top) / rect.height) * 200 + fingerOffsetY
     return { x, y }
   }
 
@@ -148,7 +152,7 @@ export default function ShapeGame({ config, effects, onComplete }) {
     if (finishedRef.current) return
     finishedRef.current = true
     const score = scoreDrawing(userTrail, refPoints)
-    const success = score >= 45
+    const success = score >= 35
     setStatus(success ? 'success' : 'fail')
     setTimeout(() => {
       onComplete({
@@ -163,12 +167,16 @@ export default function ShapeGame({ config, effects, onComplete }) {
     if (status === 'playing') finish()
   }
 
+  // Timer plus généreux + accélération drunk plafonnée
+  const effectiveTimeMs = (timeLimit + 2) * 1000
+  const cappedSpeedMultiplier = Math.min(effects.timerSpeedMultiplier, 1.25)
+
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
         <CountdownBar
-          durationMs={timeLimit * 1000}
-          speedMultiplier={effects.timerSpeedMultiplier}
+          durationMs={effectiveTimeMs}
+          speedMultiplier={cappedSpeedMultiplier}
           onExpire={handleTimeout}
         />
       </div>

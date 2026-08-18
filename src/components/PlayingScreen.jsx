@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useGame } from '../context/GameContext'
 import DrunkMeter from './DrunkMeter'
 import { getDrunkEffects } from '../utils/drunkEffects'
+import { UI_TEXT, VOICE_INTROS } from '../utils/i18n'
+import { speak } from '../utils/voice'
 
 import PathGame from '../games/PathGame'
 import ShapeGame from '../games/ShapeGame'
@@ -28,11 +30,22 @@ const GAME_COMPONENTS = {
 export default function PlayingScreen() {
   const { currentLevel, currentPlayer, dispatch, drunkIntensity, state } = useGame()
   const [showIntro, setShowIntro] = useState(true)
+  const lang = state.language || 'fr'
+  const t = UI_TEXT[lang]
 
   useEffect(() => {
     setShowIntro(true)
-    const t = setTimeout(() => setShowIntro(false), 1400)
-    return () => clearTimeout(t)
+    const introDuration = 1500
+
+    if (state.voiceEnabled && currentLevel && currentPlayer) {
+      const introLine = VOICE_INTROS[lang]?.[currentLevel.type]
+      if (introLine) {
+        speak(`${currentPlayer.name}. ${introLine}`, lang)
+      }
+    }
+
+    const timer = setTimeout(() => setShowIntro(false), introDuration)
+    return () => clearTimeout(timer)
   }, [state.currentLevelIndex])
 
   if (!currentLevel || !currentPlayer) return null
@@ -49,7 +62,7 @@ export default function PlayingScreen() {
       <div className="screen center fade-in" style={{ background: 'var(--void)' }}>
         <div className="col center" style={{ gap: 16 }}>
           <p style={{ color: 'var(--ink-dim)', fontSize: 14, letterSpacing: '0.05em' }}>
-            🍺 C'EST AU TOUR DE
+            {t.yourTurn}
           </p>
           <h1 className="pop-in" style={{ fontSize: 34, color: 'var(--acid)', textAlign: 'center' }}>
             {currentPlayer.name}
@@ -67,7 +80,7 @@ export default function PlayingScreen() {
       <div className="screen-pad col" style={{ gap: 12, paddingBottom: 8 }}>
         <div className="row spread">
           <div className="col" style={{ gap: 2 }}>
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Tour de</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{t.turnOf}</span>
             <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{currentPlayer.name}</span>
           </div>
           <DrunkMeter compact />
@@ -80,6 +93,7 @@ export default function PlayingScreen() {
           config={currentLevel.config}
           effects={effects}
           onComplete={handleComplete}
+          alcoholMode={!!state.alcoholMode}
         />
       </div>
     </div>

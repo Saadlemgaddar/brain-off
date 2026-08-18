@@ -1,9 +1,10 @@
-import { createContext, useContext, useReducer, useCallback } from 'react'
+import { createContext, useContext, useReducer } from 'react'
 import { LEVELS } from '../utils/levels'
 
 const GameContext = createContext(null)
 
-const DRUNK_STAGES = [
+// Deux jeux de libellés pour la jauge de chaos : avec alcool (thème original) et neutre (sans alcool).
+const DRUNK_STAGES_ALCOHOL = [
   { key: 'sober', label: 'SOBER', emoji: '🧠', threshold: 0 },
   { key: 'tipsy', label: 'TIPSY', emoji: '😏', threshold: 25 },
   { key: 'drunk', label: 'DRUNK', emoji: '🍺', threshold: 50 },
@@ -11,32 +12,54 @@ const DRUNK_STAGES = [
   { key: 'final', label: 'FINAL BOSS', emoji: '💀', threshold: 100 },
 ]
 
-function getDrunkStage(pct) {
-  let stage = DRUNK_STAGES[0]
-  for (const s of DRUNK_STAGES) {
+const DRUNK_STAGES_CLEAN = [
+  { key: 'sober', label: 'FOCUS', emoji: '🧠', threshold: 0 },
+  { key: 'tipsy', label: 'WOBBLY', emoji: '😏', threshold: 25 },
+  { key: 'drunk', label: 'CHAOS', emoji: '🌀', threshold: 50 },
+  { key: 'wasted', label: 'MELTDOWN', emoji: '🥴', threshold: 75 },
+  { key: 'final', label: 'FINAL BOSS', emoji: '💀', threshold: 100 },
+]
+
+function getDrunkStages(alcoholMode) {
+  return alcoholMode ? DRUNK_STAGES_ALCOHOL : DRUNK_STAGES_CLEAN
+}
+
+function getDrunkStage(pct, alcoholMode) {
+  const stages = getDrunkStages(alcoholMode)
+  let stage = stages[0]
+  for (const s of stages) {
     if (pct >= s.threshold) stage = s
   }
   return stage
 }
 
 const initialState = {
-  screen: 'home', // home | setup | playing | result | leaderboard | settings
+  screen: 'intro', // intro | home | setup | playing | result | leaderboard
   mode: 'solo', // solo | party
-  drunkModeEnabled: true, // le joueur peut choisir d'activer le chaos
-  manualDrunkLevel: null, // si défini, l'utilisateur pilote le % lui-même (0-100)
-  players: [], // [{ id, name, score, roundsPlayed, worstResult }]
+  language: null, // 'fr' | 'en' | 'darija' — choisi à l'écran intro
+  alcoholMode: null, // true | false — choisi à l'écran intro
+  voiceEnabled: true,
+  drunkModeEnabled: true,
+  manualDrunkLevel: null,
+  players: [],
   currentPlayerIndex: 0,
   currentLevelIndex: 0,
-  levelQueue: [], // séquence d'indices dans LEVELS pour cette partie
+  levelQueue: [],
   roundsPerPlayer: 5,
-  lastResult: null, // { success, scoreDelta, message }
-  sessionDrunkPct: 0, // progression auto au fil de la soirée (si pas de manualDrunkLevel)
+  lastResult: null,
+  sessionDrunkPct: 0,
 }
 
 function reducer(state, action) {
   switch (action.type) {
     case 'GO_HOME':
-      return { ...initialState }
+      return { ...initialState, language: state.language, alcoholMode: state.alcoholMode, voiceEnabled: state.voiceEnabled, screen: 'home' }
+
+    case 'SET_INTRO_CHOICES':
+      return { ...state, language: action.language, alcoholMode: action.alcoholMode, screen: 'home' }
+
+    case 'SET_VOICE_TOGGLE':
+      return { ...state, voiceEnabled: action.value }
 
     case 'GO_SETUP':
       return { ...state, screen: 'setup', mode: action.mode }
@@ -133,8 +156,6 @@ function reducer(state, action) {
 }
 
 function buildLevelQueue(totalRounds) {
-  // Mélange pondéré: on parcourt LEVELS de façon cyclique en les mélangeant par paquets
-  // pour garantir une bonne diversité sans trop de répétition consécutive du même mini-jeu type.
   const pool = [...LEVELS]
   const queue = []
   let lastType = null
@@ -163,7 +184,8 @@ export function GameProvider({ children }) {
   const currentPlayer = state.players[state.currentPlayerIndex] || null
 
   const drunkPct = state.manualDrunkLevel !== null ? state.manualDrunkLevel : state.sessionDrunkPct
-  const drunkStage = getDrunkStage(state.drunkModeEnabled ? drunkPct : 0)
+  const drunkStages = getDrunkStages(state.alcoholMode)
+  const drunkStage = getDrunkStage(state.drunkModeEnabled ? drunkPct : 0, state.alcoholMode)
   const drunkIntensity = state.drunkModeEnabled ? drunkPct / 100 : 0
 
   const value = {
@@ -174,7 +196,7 @@ export function GameProvider({ children }) {
     drunkPct,
     drunkStage,
     drunkIntensity,
-    DRUNK_STAGES,
+    drunkStages,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
