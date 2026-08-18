@@ -8,7 +8,12 @@ Construit en **React + Vite**, packagé en APK Android via **Capacitor**.
 
 ---
 
-## 🆕 Nouveautés de cette version
+## 🆕 Nouveautés de cette version (v3)
+
+- **La voix se termine avant d'enchaîner** : le jeu attend la fin réelle de la synthèse vocale (pas un délai fixe arbitraire) avant de proposer de passer au tour suivant. Un bouton "Tour suivant" apparaît une fois la voix terminée (ou immédiatement si la voix est coupée).
+- **Confirmation avant chaque défi** : un écran "Prêt ?" attend que le joueur tape l'écran ou le bouton avant de lancer le mini-jeu — plus d'enchaînement automatique surprise.
+- **Distribution de gorgée (mode avec alcool)** : en cas de victoire, le jeu désigne aléatoirement un autre joueur de la partie qui doit boire ; en cas de défaite, c'est le joueur qui a raté qui boit. Le nom est annoncé à voix haute ET affiché à l'écran. En mode sans alcool, ce système est entièrement désactivé (aucune trace).
+- **Réglages accessibles depuis le menu principal** : bouton "⚙️ Langue & mode" sur l'écran d'accueil, permet de changer la langue et le mode avec/sans alcool à tout moment, pas seulement au premier lancement.
 
 - **Écran d'intro** : choix de la langue (Français / English / الدارجة) puis choix "Avec alcool" ou "Sans alcool" avant de jouer
 - **Mode sans alcool** : aucune mention, texte, emoji ou message vocal lié à l'alcool nulle part dans l'app — tous les textes basculent vers des versions neutres et 100% fun

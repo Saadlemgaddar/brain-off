@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useGame } from '../context/GameContext'
 import DrunkMeter from './DrunkMeter'
 import { getDrunkEffects } from '../utils/drunkEffects'
-import { UI_TEXT, VOICE_INTROS } from '../utils/i18n'
-import { speak } from '../utils/voice'
+import { UI_TEXT } from '../utils/i18n'
 
 import PathGame from '../games/PathGame'
 import ShapeGame from '../games/ShapeGame'
@@ -29,24 +27,8 @@ const GAME_COMPONENTS = {
 
 export default function PlayingScreen() {
   const { currentLevel, currentPlayer, dispatch, drunkIntensity, state } = useGame()
-  const [showIntro, setShowIntro] = useState(true)
   const lang = state.language || 'fr'
   const t = UI_TEXT[lang]
-
-  useEffect(() => {
-    setShowIntro(true)
-    const introDuration = 1500
-
-    if (state.voiceEnabled && currentLevel && currentPlayer) {
-      const introLine = VOICE_INTROS[lang]?.[currentLevel.type]
-      if (introLine) {
-        speak(`${currentPlayer.name}. ${introLine}`, lang)
-      }
-    }
-
-    const timer = setTimeout(() => setShowIntro(false), introDuration)
-    return () => clearTimeout(timer)
-  }, [state.currentLevelIndex])
 
   if (!currentLevel || !currentPlayer) return null
 
@@ -55,24 +37,6 @@ export default function PlayingScreen() {
 
   function handleComplete({ success, scoreDelta, message }) {
     dispatch({ type: 'SUBMIT_RESULT', success, scoreDelta, message })
-  }
-
-  if (showIntro) {
-    return (
-      <div className="screen center fade-in" style={{ background: 'var(--void)' }}>
-        <div className="col center" style={{ gap: 16 }}>
-          <p style={{ color: 'var(--ink-dim)', fontSize: 14, letterSpacing: '0.05em' }}>
-            {t.yourTurn}
-          </p>
-          <h1 className="pop-in" style={{ fontSize: 34, color: 'var(--acid)', textAlign: 'center' }}>
-            {currentPlayer.name}
-          </h1>
-          <p style={{ color: 'var(--ink-faint)', fontSize: 13, marginTop: 8 }}>
-            {currentLevel.title}
-          </p>
-        </div>
-      </div>
-    )
   }
 
   return (

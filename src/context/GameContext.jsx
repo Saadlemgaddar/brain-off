@@ -34,10 +34,10 @@ function getDrunkStage(pct, alcoholMode) {
 }
 
 const initialState = {
-  screen: 'intro', // intro | home | setup | playing | result | leaderboard
+  screen: 'intro', // intro | home | setup | playing | ready | result | leaderboard
   mode: 'solo', // solo | party
-  language: null, // 'fr' | 'en' | 'darija' — choisi à l'écran intro
-  alcoholMode: null, // true | false — choisi à l'écran intro
+  language: null, // 'fr' | 'en' | 'darija' — choisi à l'écran intro, modifiable depuis le menu
+  alcoholMode: null, // true | false — choisi à l'écran intro, modifiable depuis le menu
   voiceEnabled: true,
   drunkModeEnabled: true,
   manualDrunkLevel: null,
@@ -46,8 +46,22 @@ const initialState = {
   currentLevelIndex: 0,
   levelQueue: [],
   roundsPerPlayer: 5,
-  lastResult: null,
+  lastResult: null, // { success, scoreDelta, message, drinkTargetName, isSelfDrink }
   sessionDrunkPct: 0,
+}
+
+// Choisit qui doit boire selon le résultat :
+// - victoire -> un autre joueur au hasard (le gagnant "distribue" une gorgée)
+// - défaite -> le joueur lui-même
+// En solo (un seul joueur), il n'y a personne d'autre à désigner : il boit dans tous les cas.
+function pickDrinkTarget(players, currentPlayerIndex, success) {
+  const currentPlayer = players[currentPlayerIndex]
+  if (!success || players.length < 2) {
+    return { name: currentPlayer.name, isSelf: true }
+  }
+  const others = players.filter((_, i) => i !== currentPlayerIndex)
+  const target = others[Math.floor(Math.random() * others.length)]
+  return { name: target.name, isSelf: false }
 }
 
 function reducer(state, action) {
@@ -58,11 +72,20 @@ function reducer(state, action) {
     case 'SET_INTRO_CHOICES':
       return { ...state, language: action.language, alcoholMode: action.alcoholMode, screen: 'home' }
 
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.value }
+
+    case 'SET_ALCOHOL_MODE':
+      return { ...state, alcoholMode: action.value }
+
     case 'SET_VOICE_TOGGLE':
       return { ...state, voiceEnabled: action.value }
 
     case 'GO_SETUP':
       return { ...state, screen: 'setup', mode: action.mode }
+
+    case 'GO_SETTINGS':
+      return { ...state, screen: 'settings' }
 
     case 'SET_DRUNK_TOGGLE':
       return { ...state, drunkModeEnabled: action.value }
@@ -73,7 +96,7 @@ function reducer(state, action) {
       const queue = buildLevelQueue(totalRounds)
       return {
         ...state,
-        screen: 'playing',
+        screen: 'ready', // on attend la confirmation du joueur avant le tout premier défi aussi
         players: players.map((p, i) => ({
           id: i,
           name: p,
@@ -93,6 +116,10 @@ function reducer(state, action) {
     case 'SET_MANUAL_DRUNK':
       return { ...state, manualDrunkLevel: action.value }
 
+    // Le joueur a confirmé qu'il est prêt sur l'écran "ready" -> on lance vraiment le défi
+    case 'CONFIRM_READY':
+      return { ...state, screen: 'playing' }
+
     case 'SUBMIT_RESULT': {
       const { success, scoreDelta, message } = action
       const players = [...state.players]
@@ -110,15 +137,27 @@ function reducer(state, action) {
         ? state.manualDrunkLevel
         : Math.min(100, Math.round((roundsDone / totalRounds) * 100))
 
+      const drinkTarget = state.alcoholMode
+        ? pickDrinkTarget(players, state.currentPlayerIndex, success)
+        : null
+
       return {
         ...state,
         screen: 'result',
         players,
-        lastResult: { success, scoreDelta, message },
+        lastResult: {
+          success,
+          scoreDelta,
+          message,
+          drinkTargetName: drinkTarget?.name || null,
+          isSelfDrink: drinkTarget?.isSelf ?? null,
+        },
         sessionDrunkPct: newDrunkPct,
       }
     }
 
+    // Après le résultat, on ne relance pas directement le défi suivant : on repasse
+    // par l'écran "ready" pour laisser le prochain joueur confirmer qu'il est prêt.
     case 'NEXT_ROUND': {
       const totalRounds = state.players.length * state.roundsPerPlayer
       const nextLevelIndex = state.currentLevelIndex + 1
@@ -128,7 +167,7 @@ function reducer(state, action) {
       const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length
       return {
         ...state,
-        screen: 'playing',
+        screen: 'ready',
         currentLevelIndex: nextLevelIndex,
         currentPlayerIndex: nextPlayerIndex,
         lastResult: null,
@@ -140,7 +179,7 @@ function reducer(state, action) {
       const totalRounds = players.length * state.roundsPerPlayer
       return {
         ...state,
-        screen: 'playing',
+        screen: 'ready',
         players,
         levelQueue: buildLevelQueue(totalRounds),
         currentLevelIndex: 0,

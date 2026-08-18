@@ -9,7 +9,7 @@ export default function HomeScreen() {
     <div className="screen screen-pad fade-in" style={{ background: 'radial-gradient(ellipse at top, #1C1C2B 0%, #0B0B14 60%)' }}>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button
-          onClick={() => dispatch({ type: 'SET_VOICE_TOGGLE', value: !state.voiceEnabled })}
+          onClick={() => dispatch({ type: 'GO_SETTINGS' })}
           style={{
             fontSize: 12,
             color: 'var(--ink-faint)',
@@ -18,7 +18,7 @@ export default function HomeScreen() {
             borderRadius: 999,
           }}
         >
-          {state.voiceEnabled ? t.voiceOn : t.voiceOff}
+          {t.changeSettings}
         </button>
       </div>
 

@@ -39,6 +39,13 @@ export const UI_TEXT = {
     voiceOn: '🔊 Voix activée',
     voiceOff: '🔇 Voix désactivée',
     continue: 'Continuer',
+    readyButton: "JE SUIS PRÊT 👍",
+    tapAnywhereReady: "(ou touche l'écran)",
+    nextRound: 'Tour suivant',
+    settingsTitle: 'Réglages',
+    language: 'Langue',
+    gameMode: 'Mode de jeu',
+    changeSettings: '⚙️ Langue & mode',
   },
   en: {
     appName: 'BRAIN OFF',
@@ -71,6 +78,13 @@ export const UI_TEXT = {
     voiceOn: '🔊 Voice on',
     voiceOff: '🔇 Voice off',
     continue: 'Continue',
+    readyButton: "I'M READY 👍",
+    tapAnywhereReady: '(or tap the screen)',
+    nextRound: 'Next round',
+    settingsTitle: 'Settings',
+    language: 'Language',
+    gameMode: 'Game mode',
+    changeSettings: '⚙️ Language & mode',
   },
   darija: {
     appName: 'BRAIN OFF',
@@ -103,6 +117,13 @@ export const UI_TEXT = {
     voiceOn: '🔊 Sawt mchaal',
     voiceOff: '🔇 Sawt mtfi',
     continue: 'Kammel',
+    readyButton: 'RANI MOUJOUD 👍',
+    tapAnywhereReady: '(wla dreb chacha)',
+    nextRound: 'Dor li jaya',
+    settingsTitle: 'I3dadat',
+    language: 'Lougha',
+    gameMode: 'Mode dyal l3ab',
+    changeSettings: '⚙️ Lougha o mode',
   },
 }
 
@@ -199,57 +220,70 @@ export const VOICE_FAIL_CLEAN = {
   ],
 }
 
-// Résultat: succès — variantes "party" (avec alcool), plus corsées, gages
+// Résultat: succès — variantes "party" (avec alcool), punchline courte AVANT la ligne de distribution de gorgée
 export const VOICE_SUCCESS_ALCOHOL = {
   fr: [
-    'Bien joué ! Les autres, un verre pour lui !',
+    'Bien joué !',
     'Il tient encore debout, incroyable.',
     'Sobre et efficace, littéralement.',
     'Un tour de plus sans tomber, respect.',
-    'Ça, ça se fête. Cul sec pour tout le monde sauf lui.',
+    'Ça, ça se fête.',
   ],
   en: [
-    'Nice! Everyone else, drink one for them!',
+    'Nice one!',
     'Still standing, unbelievable.',
     'Sober and effective, literally.',
     'Another round without falling, respect.',
-    "That deserves a toast. Bottoms up for everyone but them.",
+    'That deserves a toast.',
   ],
   darija: [
-    'Zwina! Lbaqiin, kass lih!',
+    'Zwina!',
     'Mazal wa9ef, chi haja ma tetsedq9.',
     'Sobre o mzyan f nafss lweqt.',
     'Dor akhor bla ma yta7, respect.',
-    'Hadi khassha fer7a. Kass l kolchi ghir howa la.',
+    'Hadi khassha fer7a.',
   ],
 }
 
-// Résultat: échec — variantes "party" (avec alcool), gages classiques
+// Résultat: échec — variantes "party" (avec alcool), punchline courte AVANT la ligne "tu dois boire"
 export const VOICE_FAIL_ALCOHOL = {
   fr: [
-    'Raté ! Un verre, et vite.',
-    'Il est officiellement bourré. Encore une gorgée.',
-    "Cul sec, c'est la règle.",
-    'Le cerveau a coulé. Une tournée pour tout le monde.',
-    "Ça se soigne avec un verre, tradition oblige.",
-    'Perdu ! Bois un coup, champion.',
+    'Raté !',
+    'Il est officiellement bourré.',
+    'Le cerveau a coulé.',
+    'Ça se soigne avec un verre, tradition oblige.',
+    'Perdu, champion.',
   ],
   en: [
-    'Missed it! Drink up, quick.',
-    'Officially drunk now. One more sip.',
-    'Bottoms up, rules are rules.',
-    'Brain sank. Round for everyone.',
+    'Missed it!',
+    'Officially drunk now.',
+    'Brain sank on that one.',
     'This calls for a drink, tradition demands it.',
-    'Lost! Take a sip, champ.',
+    'Lost it, champ.',
   ],
   darija: [
-    'Faute! Kass, bzerba.',
-    'Rah skran b jd. Chi jre3a khra.',
-    'Kass sec, hadi l qanoun.',
-    "L3aql ghreq. Tourné l kolchi.",
+    'Faute!',
+    'Rah skran b jd.',
+    "L3aql ghreq f hadchi.",
     'Hadi khassha kass, tradition wajba.',
-    'Khser! Chreb chi jre3a, a batal.',
+    'Khser, a batal.',
   ],
+}
+
+// Lignes de distribution de gorgée — concaténées après la punchline succès/échec ci-dessus.
+// {name} est remplacé par le nom du joueur désigné pour boire.
+export const DRINK_ASSIGN_WIN = {
+  // Victoire : le gagnant désigne un AUTRE joueur au hasard pour boire
+  fr: (name) => `${name}, un verre pour toi, offert par le gagnant !`,
+  en: (name) => `${name}, a drink for you, courtesy of the winner!`,
+  darija: (name) => `${name}, kass lik, hdiya men li rbe7!`,
+}
+
+export const DRINK_ASSIGN_LOSE = {
+  // Défaite : le joueur qui a raté boit lui-même
+  fr: (name) => `${name}, à toi de boire !`,
+  en: (name) => `${name}, drink up!`,
+  darija: (name) => `${name}, chreb nta!`,
 }
 
 export function getRandomLine(pool) {
@@ -261,4 +295,10 @@ export function getResultVoiceLines(lang, alcoholMode, success) {
     return alcoholMode ? VOICE_SUCCESS_ALCOHOL[lang] : VOICE_SUCCESS_CLEAN[lang]
   }
   return alcoholMode ? VOICE_FAIL_ALCOHOL[lang] : VOICE_FAIL_CLEAN[lang]
+}
+
+// Construit la phrase complète de gorgée à partir du résultat (nom + gagnant/perdant)
+export function getDrinkAssignLine(lang, success, targetName) {
+  const builder = success ? DRINK_ASSIGN_WIN[lang] : DRINK_ASSIGN_LOSE[lang]
+  return builder(targetName)
 }

@@ -14,6 +14,13 @@ const LANG_FALLBACK_CHAIN = {
   darija: ['ar-MA', 'ar-SA', 'ar-EG', 'ar', 'fr-FR'], // Darija n'existe pas comme voix dédiée -> arabe générique, puis français en dernier recours
 }
 
+// Durée max qu'on attend une fin de parole avant d'abandonner (sécurité si l'event
+// 'onend' ne se déclenche jamais sur un appareil particulier — ne bloque jamais le jeu).
+const SPEECH_SAFETY_TIMEOUT_MS = 7000
+// Estimation grossière du temps de parole si l'API ne peut pas nous le dire à l'avance
+// (utilisée uniquement pour dimensionner le timeout de sécurité selon la longueur du texte).
+const MS_PER_CHARACTER_ESTIMATE = 90
+
 let voicesCache = null
 let voicesReadyPromise = null
 
@@ -69,27 +76,50 @@ export async function hasVoiceFor(lang) {
   return !!pickVoiceForChain(voices, chain)
 }
 
-export async function speak(text, lang, { rate = 1.0, pitch = 1.0, volume = 1.0 } = {}) {
-  if (!isVoiceSupported() || !text) return
-  try {
-    const voices = await loadVoicesOnce()
-    const chain = LANG_FALLBACK_CHAIN[lang] || LANG_FALLBACK_CHAIN.fr
+// Parle le texte donné et résout la Promise quand la parole est VRAIMENT terminée
+// (event 'onend'), pas après un délai arbitraire. Si la voix n'est pas disponible ou
+// que quelque chose échoue, résout immédiatement pour ne jamais bloquer le jeu.
+export function speak(text, lang, { rate = 1.0, pitch = 1.0, volume = 1.0 } = {}) {
+  if (!isVoiceSupported() || !text) return Promise.resolve()
 
-    window.speechSynthesis.cancel() // évite l'empilement si plusieurs lignes se déclenchent vite
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = chain[0]
-    const voice = pickVoiceForChain(voices, chain)
-    if (voice) {
-      utterance.voice = voice
-      utterance.lang = voice.lang
+  return new Promise(async (resolve) => {
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      resolve()
     }
-    utterance.rate = rate
-    utterance.pitch = pitch
-    utterance.volume = volume
-    window.speechSynthesis.speak(utterance)
-  } catch (e) {
-    // Silencieux — la voix est un bonus, jamais bloquant pour le jeu
-  }
+
+    try {
+      const voices = await loadVoicesOnce()
+      const chain = LANG_FALLBACK_CHAIN[lang] || LANG_FALLBACK_CHAIN.fr
+
+      window.speechSynthesis.cancel() // évite l'empilement si plusieurs lignes se déclenchent vite
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = chain[0]
+      const voice = pickVoiceForChain(voices, chain)
+      if (voice) {
+        utterance.voice = voice
+        utterance.lang = voice.lang
+      }
+      utterance.rate = rate
+      utterance.pitch = pitch
+      utterance.volume = volume
+
+      utterance.onend = settle
+      utterance.onerror = settle
+
+      // Filet de sécurité : certains WebView Android n'émettent jamais onend correctement.
+      // On calcule un timeout proportionnel à la longueur du texte, plafonné.
+      const estimated = Math.min(SPEECH_SAFETY_TIMEOUT_MS, Math.max(1200, text.length * MS_PER_CHARACTER_ESTIMATE))
+      setTimeout(settle, estimated)
+
+      window.speechSynthesis.speak(utterance)
+    } catch (e) {
+      // Silencieux — la voix est un bonus, jamais bloquant pour le jeu
+      settle()
+    }
+  })
 }
 
 export function stopSpeaking() {

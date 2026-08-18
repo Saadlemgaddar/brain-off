@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../context/GameContext'
-import { UI_TEXT, getResultVoiceLines, getRandomLine } from '../utils/i18n'
+import { UI_TEXT, getResultVoiceLines, getRandomLine, getDrinkAssignLine } from '../utils/i18n'
 import { speak } from '../utils/voice'
 
 export default function ResultScreen() {
@@ -9,6 +9,7 @@ export default function ResultScreen() {
   const spokenRef = useRef(false)
   const lang = state.language || 'fr'
   const t = UI_TEXT[lang]
+  const [canContinue, setCanContinue] = useState(!state.voiceEnabled) // si la voix est coupée, on peut continuer tout de suite
 
   // Choisit UNE ligne aléatoire pour ce résultat, mémorisée pour rester cohérente
   // entre l'affichage texte et l'audio (pas de tirage différent pour chacun).
@@ -18,23 +19,36 @@ export default function ResultScreen() {
     lineRef.current = getRandomLine(pool)
   }
 
+  const drinkLine = lastResult && state.alcoholMode && lastResult.drinkTargetName
+    ? getDrinkAssignLine(lang, lastResult.success, lastResult.drinkTargetName)
+    : null
+
   useEffect(() => {
     if (!lastResult || spokenRef.current) return
     spokenRef.current = true
-    if (state.voiceEnabled) {
-      const namePrefix = currentPlayer?.name ? `${currentPlayer.name}. ` : ''
-      speak(namePrefix + lineRef.current, lang)
-    }
-  }, [])
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      dispatch({ type: 'NEXT_ROUND' })
-    }, 2400)
-    return () => clearTimeout(t)
+    if (!state.voiceEnabled) {
+      setCanContinue(true)
+      return
+    }
+
+    // On attend la fin RÉELLE de la voix avant d'autoriser à continuer — pas de délai fixe arbitraire.
+    async function speakSequence() {
+      const namePrefix = currentPlayer?.name ? `${currentPlayer.name}. ` : ''
+      await speak(namePrefix + lineRef.current, lang)
+      if (drinkLine) {
+        await speak(drinkLine, lang)
+      }
+      setCanContinue(true)
+    }
+    speakSequence()
   }, [])
 
   if (!lastResult) return null
+
+  function handleContinue() {
+    dispatch({ type: 'NEXT_ROUND' })
+  }
 
   return (
     <div
@@ -44,6 +58,7 @@ export default function ResultScreen() {
           ? 'radial-gradient(circle at center, #123322 0%, #0B0B14 70%)'
           : 'radial-gradient(circle at center, #331222 0%, #0B0B14 70%)',
       }}
+      onClick={canContinue ? handleContinue : undefined}
     >
       <div className="col center pop-in" style={{ gap: 14, padding: '0 32px', textAlign: 'center' }}>
         <div style={{ fontSize: 56 }}>
@@ -59,6 +74,35 @@ export default function ResultScreen() {
         <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 4 }}>
           {lastResult.scoreDelta >= 0 ? '+' : ''}{lastResult.scoreDelta} {t.points}
         </p>
+
+        {drinkLine && (
+          <div
+            className="pop-in"
+            style={{
+              marginTop: 10,
+              padding: '14px 20px',
+              background: 'var(--surface)',
+              borderRadius: 16,
+              border: '2px solid var(--drunk)',
+            }}
+          >
+            <p style={{ fontSize: 15, fontWeight: 600 }}>🍺 {drinkLine}</p>
+          </div>
+        )}
+
+        {canContinue ? (
+          <button
+            onClick={handleContinue}
+            className="btn btn-primary pop-in"
+            style={{ marginTop: 20, padding: '16px 32px' }}
+          >
+            {t.nextRound} →
+          </button>
+        ) : (
+          <p style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 20 }}>
+            🔊 …
+          </p>
+        )}
       </div>
     </div>
   )
