@@ -1,0 +1,18 @@
+{
+  "appId": "com.brainoff.game",
+  "appName": "Brain Off",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0B0B14",
+  "android": {
+    "backgroundColor": "#0B0B14",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#0B0B14",
+      "showSpinner": false
+    }
+  }
+}
