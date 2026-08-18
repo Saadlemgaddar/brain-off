@@ -55,7 +55,6 @@ export default function PathGame({ config, effects, onComplete }) {
   const [trail, setTrail] = useState([])
   const [status, setStatus] = useState('playing') // playing | success | fail
   const finishedRef = useRef(false)
-  const wobbleSeed = useRef(Math.random() * 100)
 
   const start = points[0]
   const end = points[points.length - 1]
@@ -85,15 +84,6 @@ export default function PathGame({ config, effects, onComplete }) {
     if (!dragging || status !== 'playing') return
     const touch = e.touches ? e.touches[0] : e
     let p = getSvgPoint(touch.clientX, touch.clientY)
-
-    // Décalage drunk appliqué à l'input (uniquement si le mode chaos est actif)
-    if (effects.inputOffset > 0) {
-      const t = Date.now() / 220
-      p = {
-        x: p.x + Math.sin(t + wobbleSeed.current) * (effects.inputOffset * 0.6),
-        y: p.y + Math.cos(t * 1.4 + wobbleSeed.current) * (effects.inputOffset * 0.6),
-      }
-    }
 
     const dist = minDistToPath(p, points)
     const tolerance = width / 2 + TOUCH_TOLERANCE_PX
@@ -131,10 +121,6 @@ export default function PathGame({ config, effects, onComplete }) {
   function handleTimeout() {
     if (status === 'playing') finish(false)
   }
-
-  const pathOpacity = effects.fadeFlicker
-    ? 0.35 + Math.sin(Date.now() / 300) * 0.15
-    : 1
 
   // Timer plus généreux + accélération drunk plafonnée pour rester jouable même en chaos
   const effectiveTimeMs = (timeLimit + 2) * 1000
@@ -176,7 +162,6 @@ export default function PathGame({ config, effects, onComplete }) {
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
-            opacity={pathOpacity}
           />
           <path
             d={pointsToPath(points)}

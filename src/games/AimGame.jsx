@@ -65,9 +65,6 @@ export default function AimGame({ config, effects, onComplete }) {
   const color = SEQUENCE_COLORS[step % SEQUENCE_COLORS.length]
   const emoji = SEQUENCE_EMOJI[step % SEQUENCE_EMOJI.length]
 
-  // Décalage de la zone tactile réelle vs visuelle (mode drunk)
-  const visualOffset = effects.inputOffset
-
   return (
     <div className="col" style={{ height: '100%', padding: '0 16px 16px' }}>
       <div style={{ marginBottom: 10 }}>
@@ -93,7 +90,7 @@ export default function AimGame({ config, effects, onComplete }) {
               height: size,
               borderRadius: '50%',
               background: color,
-              transform: `translate(-50%, -50%) translate(${Math.sin(Date.now()/300) * visualOffset * 0.3}px, ${Math.cos(Date.now()/300) * visualOffset * 0.3}px)`,
+              transform: 'translate(-50%, -50%)',
               transition: moving || effects.intensity > 0.4 ? 'left 0.35s ease, top 0.35s ease' : 'none',
               boxShadow: `0 0 24px ${color}88`,
             }}

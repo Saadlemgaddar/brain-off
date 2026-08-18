@@ -46,7 +46,8 @@ export default function ResultScreen() {
 
   if (!lastResult) return null
 
-  function handleContinue() {
+  function handleContinue(e) {
+    e.stopPropagation()
     dispatch({ type: 'NEXT_ROUND' })
   }
 

@@ -46,6 +46,8 @@ export const UI_TEXT = {
     language: 'Langue',
     gameMode: 'Mode de jeu',
     changeSettings: '⚙️ Langue & mode',
+    lastPlaceTitle: 'LE PLUS BOURRÉ DE LA SOIRÉE',
+    lastPlaceTitleClean: 'LE GRAND PERDANT DE LA SOIRÉE',
   },
   en: {
     appName: 'BRAIN OFF',
@@ -85,6 +87,8 @@ export const UI_TEXT = {
     language: 'Language',
     gameMode: 'Game mode',
     changeSettings: '⚙️ Language & mode',
+    lastPlaceTitle: 'MOST DRUNK OF THE NIGHT',
+    lastPlaceTitleClean: 'THE BIGGEST LOSER OF THE NIGHT',
   },
   darija: {
     appName: 'BRAIN OFF',
@@ -124,6 +128,8 @@ export const UI_TEXT = {
     language: 'Lougha',
     gameMode: 'Mode dyal l3ab',
     changeSettings: '⚙️ Lougha o mode',
+    lastPlaceTitle: 'LI SKRAN BZAF F SOIRÉE',
+    lastPlaceTitleClean: 'LI KHSER BZAF F SOIRÉE',
   },
 }
 

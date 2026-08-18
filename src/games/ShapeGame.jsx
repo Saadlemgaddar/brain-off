@@ -82,7 +82,6 @@ export default function ShapeGame({ config, effects, onComplete }) {
   const [shapeOpacity, setShapeOpacity] = useState(1)
   const [shake, setShake] = useState(false)
   const finishedRef = useRef(false)
-  const wobbleSeed = useRef(Math.random() * 100)
 
   // Rotation continue + disparition progressive en mode drunk
   useEffect(() => {
@@ -132,15 +131,6 @@ export default function ShapeGame({ config, effects, onComplete }) {
     if (!drawing || status !== 'playing') return
     const touch = e.touches ? e.touches[0] : e
     let p = getSvgPoint(touch.clientX, touch.clientY)
-
-    if (effects.inputOffset > 0) {
-      const t = Date.now() / 220
-      p = {
-        x: p.x + Math.sin(t + wobbleSeed.current) * (effects.inputOffset * 0.5),
-        y: p.y + Math.cos(t * 1.4 + wobbleSeed.current) * (effects.inputOffset * 0.5),
-      }
-    }
-
     setUserTrail(prev => [...prev, p])
   }
 

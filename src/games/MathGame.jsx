@@ -99,7 +99,7 @@ export default function MathGame({ config, effects, onComplete, alcoholMode }) {
             textAlign: 'center',
             transform: wiggle ? `rotate(${effects.intensity * 4}deg) scale(1.05)` : 'rotate(0deg) scale(1)',
             transition: 'transform 0.5s ease',
-            filter: effects.hueShift ? 'hue-rotate(90deg)' : 'none',
+            filter: effects.blurPx > 0.1 ? `blur(${effects.blurPx * 0.4}px)` : 'none',
           }}
         >
           {exprText} = ?

@@ -18,13 +18,14 @@ export default function ReadyScreen() {
     spokenRef.current = true
     const introLine = VOICE_INTROS[lang]?.[currentLevel.type]
     if (introLine) {
-      speak(`${currentPlayer.name}. ${t.yourTurn}. ${introLine}`, lang)
+      speak(`${t.yourTurn} ${currentPlayer.name}. ${introLine}`, lang)
     }
   }, [state.currentLevelIndex, currentPlayer, currentLevel])
 
   if (!currentPlayer || !currentLevel) return null
 
-  function handleReady() {
+  function handleReady(e) {
+    e.stopPropagation()
     dispatch({ type: 'CONFIRM_READY' })
   }
 

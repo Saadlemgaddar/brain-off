@@ -1,6 +1,6 @@
 import { useGame } from '../context/GameContext'
 import DrunkMeter from './DrunkMeter'
-import { getDrunkEffects } from '../utils/drunkEffects'
+import { getDrunkEffects, getStageClassName, getStageStyle } from '../utils/drunkEffects'
 import { UI_TEXT } from '../utils/i18n'
 
 import PathGame from '../games/PathGame'
@@ -39,6 +39,15 @@ export default function PlayingScreen() {
     dispatch({ type: 'SUBMIT_RESULT', success, scoreDelta, message })
   }
 
+  // Le flou et le tremblement s'appliquent directement au conteneur interactif (n'affectent
+  // pas les coordonnées tactiles). Le retournement 180° est volontairement appliqué à TOUT
+  // le conteneur y compris les zones tactiles : c'est le but recherché (le joueur doit
+  // s'adapter à un écran retourné), pas un bug — mais on ne l'applique qu'en overlay non
+  // interactif pour les mini-jeux qui reposent sur un tracé précis, où un flip briserait
+  // complètement la jouabilité plutôt que de créer un vrai défi.
+  const stageClassName = getStageClassName(effects)
+  const stageStyle = getStageStyle(effects)
+
   return (
     <div className="screen fade-in" style={{ background: 'var(--void)' }}>
       <div className="screen-pad col" style={{ gap: 12, paddingBottom: 8 }}>
@@ -51,7 +60,10 @@ export default function PlayingScreen() {
         </div>
       </div>
 
-      <div className="grow" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div
+        className={`grow ${stageClassName}`}
+        style={{ position: 'relative', overflow: 'hidden', ...stageStyle }}
+      >
         <GameComponent
           key={currentLevel.id + '-' + state.currentLevelIndex}
           config={currentLevel.config}

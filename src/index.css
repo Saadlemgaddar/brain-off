@@ -162,39 +162,22 @@ p {
 }
 
 /* === Drunk mode global effects (applied to game stage) === */
-.drunk-tilt {
-  animation: drunkTilt 3.2s ease-in-out infinite;
+/* Tremblement/vibration de l'écran — intensité contrôlée via une variable CSS custom */
+.drunk-shake {
+  animation: drunkShake 0.5s ease-in-out infinite;
 }
-@keyframes drunkTilt {
-  0% { transform: rotate(0deg) translate(0,0); }
-  25% { transform: rotate(1.2deg) translate(3px, -2px); }
-  50% { transform: rotate(-1.5deg) translate(-3px, 2px); }
-  75% { transform: rotate(0.8deg) translate(2px, 3px); }
-  100% { transform: rotate(0deg) translate(0,0); }
-}
-
-.drunk-blur {
-  filter: blur(1.4px);
+@keyframes drunkShake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-3px, 2px) rotate(-0.6deg); }
+  40% { transform: translate(3px, -2px) rotate(0.6deg); }
+  60% { transform: translate(-2px, -3px) rotate(-0.4deg); }
+  80% { transform: translate(2px, 3px) rotate(0.4deg); }
 }
 
-.drunk-heavy-blur {
-  filter: blur(2.6px);
-}
-
-.drunk-hue {
-  animation: drunkHue 4s linear infinite;
-}
-@keyframes drunkHue {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
-}
-
-.drunk-vignette::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(184, 63, 255, 0.25) 100%);
+/* Écran qui se retourne progressivement — la rotation réelle est pilotée en inline style
+   via getStageStyle() (transform: rotate(Ndeg)), cette classe ne fait qu'activer la transition douce. */
+.drunk-flip {
+  will-change: transform;
 }
 
 ::-webkit-scrollbar { display: none; }
